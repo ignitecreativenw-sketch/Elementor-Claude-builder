@@ -1,0 +1,12 @@
+deploy/.env
+deploy/media-import.tsv
+tools/
+__pycache__/
+*.pyc
+.DS_Store
+qa/*.jpg
+qa/*.png
+qa/*.html
+reference/*.png
+reference/*.jpg
+reference/combined.css
