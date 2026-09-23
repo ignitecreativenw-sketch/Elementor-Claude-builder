@@ -35,9 +35,9 @@ Ask only for what's missing; don't re-ask things already in the conversation.
 ```
 <project>/
   reference/        screenshots (3 widths), combined.css, design-tokens.json, content.json, pdf pages
-  spec/             one <page>.md Section Spec per page (the contract)
-  build/            build_template.py, capture_reference.py, capture_shots.py, qa_diff.py, responsive_audit.py, render_preview.py, download_assets.py
-  templates/        <page>.json outputs (what gets pushed to the site)
+  spec/             one <page>.md Section Spec per page (the contract); spec/forms/<name>.json for FormCraft forms
+  build/            build_template.py, build_form.py (FormCraft), capture_reference.py, capture_shots.py, qa_diff.py, responsive_audit.py, render_preview.py, download_assets.py
+  templates/        <page>.json outputs (what gets pushed to the site); templates/forms/<name>.txt FormCraft imports
   assets/           optimised images (webp/svg) + manifest.json (file, alt)
   deploy/           push_page.sh (SSH), push_rest.py (REST), push_seo.py, sync_media.py, verify_live.py, set_breakpoints.py, .env (gitignored), media-map.json, pages.json
   qa/               screenshot diffs, psi.md, seo-checklist.md, perf-checklist.md, design-checklist.md
@@ -169,7 +169,7 @@ For each section record: container layout (direction, wrap, justify/align, gap, 
 | Tabs / accordion / FAQ | Nested Tabs / Nested Accordion (FAQ schema via SEO plugin) |
 | Testimonials | Testimonial Carousel (autoplay off, lazy) or static Testimonial widgets in a grid |
 | Logo strips | Image widgets in a wrapping row (not a carousel) |
-| Forms | Elementor Pro Form, native styling |
+| Forms | Elementor Pro Form by default; FormCraft (via Shortcode widget) when the brief needs conditional logic, calculations, multi-step or popup forms — see Forms |
 | Blog/post grids | Loop Grid with a Loop Item template |
 | Sliders / hero carousels | Replace with a static hero; propose this deviation at Gate B |
 | Video backgrounds, parallax, Lottie, entrance animations | Omit; propose a static equivalent at Gate B |
@@ -248,6 +248,22 @@ After any push: purge StackCache (`wp cache flush` plus the plugin's purge, or t
 - In the same round, run the craft-floor checks and tick `qa/design-checklist.md`; optionally run the Impeccable detector on the saved staging HTML.
 - Fix structural or repeated problems in the generator and re-push. Fix one-off nudges directly in the editor only if Adam prefers; otherwise everything goes through JSON so the project folder stays the truth.
 - Stop iterating when each captured section is under the agreed diff threshold (default 2 % RMSE per section, all three widths), every designed section passes the rules check, and the design checklist is ticked, or when the remaining difference is an approved deviation. Do not keep polishing past the second round.
+
+## Forms (Elementor Pro Form by default, FormCraft when it earns it)
+
+**Default:** Elementor Pro Form widget for contact, quote-request, callback and newsletter forms. It is native, styled in the Style tab, adds no plugin assets, and the honeypot option avoids reCAPTCHA. Recipients, subject and the success message go in the widget settings in the generated JSON.
+
+**FormCraft** (nCrafts, premium) is used only when the brief needs conditional show/hide logic, live maths/quote calculators, multi-step forms, popup or slide-in forms with triggers, or per-form analytics. It is a separate front end (own CSS/JS, AJAX submit), so each FormCraft form is one extra script/style pair to account for in the PageSpeed loop, and its look is set in its own colour scheme (from the Site Settings globals), not the Style tab.
+
+How FormCraft forms are built and placed:
+
+1. Write a form spec at `spec/forms/<name>.json` (copy `spec/forms/contact.example.json`): name, recipients, sender, success message, colours from the globals, fields (`text`, `email`, `textarea`, `dropdown`, `date`, `submit`, `captcha`). Other field types are added in the FormCraft UI after import, or exported from a sample form so their markup can be added to the generator.
+2. `python3 build/build_form.py spec/forms/<name>.json` writes `templates/forms/<name>.txt`, a FormCraft 3 import file (JSON with raw-deflate + base64 `html`/`builder` blobs, plus `meta_builder` and `addons`). The generator never writes SMTP credentials; mail goes through the site's PHP mail / SMTP plugin. The reCAPTCHA secret is entered in FormCraft > Add-ons by Adam, never in a spec or the repo.
+3. Import: FormCraft > Add New > Import > choose the `.txt` > name it > Create Form (Adam or Claude in Chrome; ~20 seconds). Open the form once in the FormCraft editor and press Save so the stored HTML is recompiled against the real form id. Note the id.
+4. Embed with the native Elementor Shortcode widget in the page JSON: `{"widgetType": "shortcode", "settings": {"shortcode": "[fc id='<id>'][/fc]"}}`. Popup trigger: `[fc id='<id>' type='popup' placement='inline']Get a quote[/fc]`. Record the id in `deploy/pages.json` under `forms`.
+5. QA: submit a test entry on staging; check the notification arrives, the success message shows, no console errors, and PSI after the form is on the page.
+
+Secrets rule: FormCraft exports contain the SMTP username/password and reCAPTCHA secret if they were set in the UI. Never commit a raw export; strip `smtp_*` and `secret_key` first (`build_form.py --scrub <export.txt>` does this) and treat any pasted export as a credential leak to rotate.
 
 ## Phase 5 — SEO (done even if the reference has none)
 

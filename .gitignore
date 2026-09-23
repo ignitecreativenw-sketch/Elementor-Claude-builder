@@ -10,3 +10,5 @@ qa/*.html
 reference/*.png
 reference/*.jpg
 reference/combined.css
+templates/forms/*.txt
+!templates/forms/.gitkeep

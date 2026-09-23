@@ -1,0 +1,21 @@
+{
+  "name": "Contact",
+  "site_url": "https://STAGING-URL",
+  "recipients": "info@client.co.uk",
+  "sender_name": "Client Website",
+  "sender_email": "no-reply@client.co.uk",
+  "success": "Thanks, we'll be in touch within one working day.",
+  "colors": {"button": "#8F0000", "button_dark": "#700000", "step": "#8F0000", "step_dark": "#700000",
+             "font": "#ffffff", "text": "#222222", "field_text": "#444444", "field_bg": "#F7F7F7"},
+  "font_family": "inherit",
+  "label_style": "placeholder",
+  "captcha_site_key": "",
+  "fields": [
+    {"type": "text", "label": "Name", "required": true, "width": "50%", "icon": "person"},
+    {"type": "email", "label": "Email", "required": true, "width": "50%"},
+    {"type": "text", "label": "Phone", "required": true, "width": "50%", "validate": "numbers", "icon": "local_phone"},
+    {"type": "dropdown", "label": "Service", "width": "50%", "options": ["Year-end accounts", "Bookkeeping", "Payroll", "Other"]},
+    {"type": "textarea", "label": "Message", "rows": 4},
+    {"type": "submit", "label": "Send message", "align": "left"}
+  ]
+}
