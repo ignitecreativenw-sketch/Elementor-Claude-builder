@@ -5,11 +5,11 @@ description: "Rebuild a website page or site from a reference URL or PDF as nati
 
 # Elementor Clone Build
 
-Turn a reference (live URL or PDF) into a pixel-faithful Elementor site that is built entirely from native Elementor widgets and Style-tab settings, scores 100 on PageSpeed Insights, and is properly SEO'd even when the reference isn't. Work is done as **generated JSON** pushed to the site with WP-CLI, not by dragging widgets in a browser. Keep it cheap on credits: text specs over screenshots, one generator script reused for every page, decisions made once in a spec and never re-litigated.
+Turn a reference (live URL or PDF) into a pixel-faithful Elementor site that is built entirely from native Elementor widgets and Style-tab settings, scores 100 on PageSpeed Insights, and is properly SEO'd even when the reference isn't. Work is done as **generated JSON** pushed to the site with WP-CLI or the REST API, not by dragging widgets in a browser. Keep it cheap on credits: text specs over screenshots, one generator script reused for every page, decisions made once in a spec and never re-litigated.
 
-Target stack: WordPress + Elementor core + Elementor Pro 4.2.0, **Flexbox Container** editor (not V4 Atomic), 20i hosting with 20i's StackCache plugin and SSH/WP-CLI access. The project folder lives on Adam's Mac (connect it to the session); GitHub is optional. Adam checks PageSpeed Insights manually and pastes scores back.
+Target stack: WordPress + Elementor core + Elementor Pro 4.2.x, **Flexbox Container** editor (not V4 Atomic), typically 20i hosting with StackCache; some client hosts are nginx with no SSH (REST route). The project folder lives on Adam's Mac (connect it to the session); the kit repo is `ignitecreativenw-sketch/Elementor-Claude-builder`. Adam checks PageSpeed Insights manually and pastes scores back.
 
-## The seven rules (never break these without Adam's written OK)
+## The nine rules (never break these without Adam's written OK)
 
 1. **Native widgets only.** Heading, Text Editor, Image, Button, Icon, Icon Box, Icon List, Image Box, Container, Nested Tabs/Accordion, Pro Form, Posts/Loop Grid, Testimonial Carousel, Call to Action, etc. No HTML widget, no code block, no shortcode wrappers, no inline `style=` in Text Editor content. The site must stay editable by Adam and his clients in the normal Elementor UI.
 2. **Style-tab styling only.** Every colour, font, size, spacing, border, shadow, hover state and breakpoint value lives in the widget/container settings (and Site Settings globals). Custom CSS (Advanced > Custom CSS, Site Settings > Custom CSS, theme CSS) is a last resort: stop, explain exactly what can't be done natively and why, and wait for approval before adding a single line.
@@ -21,7 +21,7 @@ Target stack: WordPress + Elementor core + Elementor Pro 4.2.0, **Flexbox Contai
 8. **Clone or redesign is decided per page, at Gate A, in writing.** Every page in the spec carries `mode: clone` (pixel-faithful) or `mode: redesign` (reference is evidence, not the target) or `mode: new` (no reference; designed from the Design Standards). Drifting from clone to redesign mid-build is a Gate B item, not a judgement call.
 9. **Credentials never enter the chat.** Application passwords, SSH keys, FTP and SMTP details live only in `deploy/.env` on Adam's Mac (gitignored, chmod 600), written by Adam; a session sources that file and never prints it. Anything pasted into a conversation is treated as leaked and rotated.
 
-**Approval gates:** (A) after the Section Spec is written, before any JSON is generated; (B) any time custom CSS/HTML, site-side PHP, or a deviation from the reference is proposed. Everything else runs unattended.
+**Approval gates:** (A) after the Section Spec is written, before any JSON is generated; (B) any time custom CSS/HTML, site-side PHP beyond the kit's mu-plugin, or a deviation from the reference is proposed. Everything else runs unattended.
 
 ## Inputs to collect first (one message, all at once)
 
@@ -315,7 +315,7 @@ Per page, fill and tick `qa/seo-checklist.md`:
 
 - All captured sections under diff threshold at three widths; all designed-responsive sections pass the rules check; design checklist ticked; deviations and spacing snaps listed and approved.
 - SEO checklist fully ticked; perf checklist fully ticked; PSI 100/100 recorded in `qa/psi.md` (or the exact blocker explained, e.g. a client-mandated chat widget).
-- Zero custom CSS/HTML/PHP, or each instance listed with Adam's approval quoted.
+- Zero custom CSS/HTML/PHP beyond the kit mu-plugin, or each instance listed with Adam's approval quoted.
 - `spec/`, `build/`, `templates/`, `assets/`, `deploy/`, `qa/` saved in the project folder (committed if it is a git repo) with a short note per page.
 - One closing message: what was built, page IDs, scores, deviations, anything the client needs to supply (real copy, photos, form recipients).
 - A Build Report in the project folder (`qa/build-report.md`): overview, pipeline, pages table with IDs, performance runs, responsive passes, connection channels, the gotchas that cost time, and an ordered "where it stands" list. The Expert Broker report is the model; it is what the next session and the next client build pick up from.
