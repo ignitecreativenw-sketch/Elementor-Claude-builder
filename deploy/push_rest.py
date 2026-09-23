@@ -33,6 +33,11 @@ SLUG = sys.argv[3] if len(sys.argv) > 3 else "home"
 # /<parent>/<slug> (used by the case study detail pages)
 PARENT = sys.argv[4] if len(sys.argv) > 4 else None
 
+# pre-push gates: JSON-level auditors, exact and instant; a failure means fix the builder
+for gate in ("audit_widths.py", "audit_contact.py"):
+    if subprocess.call([sys.executable, os.path.join(ROOT, "build", gate)]) != 0:
+        sys.exit(f"{gate} failed — fix the shared builder, then re-run")
+
 
 # The host answers the REST API with a "One moment, please..." bot-protection
 # interstitial when it is hit from a cloud IP, with a 200 and content-type

@@ -18,6 +18,8 @@ Target stack: WordPress + Elementor core + Elementor Pro 4.2.0, **Flexbox Contai
 5. **Spacing uses the scale, not one-off numbers.** Every padding, margin and gap value is a token from the Spacing Scale below (Atlassian's 8 px system). Reference values are snapped to the nearest token; anything that would move more than 4 px is listed at Gate A so Adam decides fidelity vs. rhythm.
 6. **100 PageSpeed and full SEO are part of "done"**, not a later phase. Decisions that hurt performance (sliders, video backgrounds, motion effects, third-party embeds above the fold, unoptimised images, extra font weights) are avoided in the spec, not fixed afterwards.
 7. **Approve once, run to completion.** Get sign-off at the two gates below, then finish the whole page/site without asking for click-by-click permission. Amendments come during or after.
+8. **Clone or redesign is decided per page, at Gate A, in writing.** Every page in the spec carries `mode: clone` (pixel-faithful) or `mode: redesign` (reference is evidence, not the target) or `mode: new` (no reference; designed from the Design Standards). Drifting from clone to redesign mid-build is a Gate B item, not a judgement call.
+9. **Credentials never enter the chat.** Application passwords, SSH keys, FTP and SMTP details live only in `deploy/.env` on Adam's Mac (gitignored, chmod 600), written by Adam; a session sources that file and never prints it. Anything pasted into a conversation is treated as leaked and rotated.
 
 **Approval gates:** (A) after the Section Spec is written, before any JSON is generated; (B) any time custom CSS/HTML, site-side PHP, or a deviation from the reference is proposed. Everything else runs unattended.
 
@@ -30,16 +32,18 @@ Ask only for what's missing; don't re-ask things already in the conversation.
 - Confirm Elementor core version and that Flexbox Containers is the active editor. Ask for **one exported template JSON from that site** (Templates > Saved Templates > Export). This is the schema ground truth: match its `version` field, id format and settings keys rather than trusting documentation.
 - SEO plugin in use (Rank Math / Yoast / SEOPress) and the client's target keywords, location and business type, if known.
 - Brand tokens if they exist already (colour hexes, font families). Otherwise they get extracted in Phase 1.
+- **Contact details, before anything is built:** phone (display and E.164 `tel:`), email, form recipient, address. They go in `spec/site.json` (copy `spec/site.example.json`); `build/layout.py` refuses to import while any is missing or a placeholder, so no form can ship addressed to nobody. (The Expert Broker shipped thirteen forms to `[EMAIL ADDRESS]` before this rule existed.)
+- **Host profile, five minutes, before choosing a push route:** server software (nginx or Apache — `.htaccess` does nothing on nginx and static files never touch PHP, so cache headers are a host-panel/CDN job), SSH available or not, cache layer, bot protection (Imunify360 blocks cloud-IP writes outright; the "One moment, please" interstitial is a different thing that backoff clears), and how mail leaves the server. Record it in `spec/site.json > host` and pick Route A/B/C from it rather than discovering it by failure.
 - Project folder on Adam's Mac (connect it to the session). Start every new client from the kit repo `ignitecreativenw-sketch/Elementor-Claude-builder` (clone or copy it to `~/Desktop/<Client>`); it already contains the generator, capture, QA and push scripts. A git repo inside the client folder is optional.
 
 ```
 <project>/
   reference/        screenshots (3 widths), combined.css, design-tokens.json, content.json, pdf pages
-  spec/             one <page>.md Section Spec per page (the contract); spec/forms/<name>.json for FormCraft forms
-  build/            build_template.py, build_form.py (FormCraft), capture_reference.py, capture_shots.py, qa_diff.py, responsive_audit.py, render_preview.py, download_assets.py
+  spec/             site.json (contact details + host profile, required), one <page>.md Section Spec per page (the contract); spec/forms/<name>.json for FormCraft forms
+  build/            build_template.py, layout.py (row/col/boxed2 + SITE contact details), build_form.py (FormCraft), audit_widths.py, audit_contact.py, capture_reference.py, capture_shots.py, qa_diff.py, responsive_audit.py, render_preview.py, download_assets.py
   templates/        <page>.json outputs (what gets pushed to the site); templates/forms/<name>.txt FormCraft imports
   assets/           optimised images (webp/svg) + manifest.json (file, alt)
-  deploy/           push_page.sh (SSH), push_rest.py (REST), push_seo.py, sync_media.py, verify_live.py, set_breakpoints.py, .env (gitignored), media-map.json, pages.json
+  deploy/           push_page.sh (SSH), push_rest.py (REST), push_seo.py, sync_media.py, verify_live.py, set_breakpoints.py, mu-plugins/ignite-site-fixes.php, .env (gitignored), media-map.json, pages.json (append-only)
   qa/               screenshot diffs, psi.md, seo-checklist.md, perf-checklist.md, design-checklist.md
   tools/            shallow clones of ui-ux-pro-max-skill and impeccable (see Design Standards), gitignored
 ```
@@ -139,6 +143,7 @@ Write `spec/<page>.md`. This is the single contract every later step follows; a 
 Canvas: 1440 desktop / 1024 tablet / 390 mobile. Container max-width: 1200px.
 Globals: primary #8F0000, accent #FDB415, text #222222, surface #F7F7F7
 Fonts: Headings Poppins 600 | Body Inter 400 (weights used: 400, 600 only)
+Mode: clone | redesign | new   (Gate A decision; a change later is Gate B)
 Responsive source: captured (URL) | designed (PDF/desktop-only) — per section below
 Spacing snaps > 4px: S1 padding 116 → 120 (space.1000+500); S3 gap 28 → 32 (space.400)
 
@@ -181,9 +186,15 @@ Present the spec, the deviations list, the spacing snaps over 4 px, the designed
 
 ## Phase 3 — Site Settings first, then generate JSON
 
-**Site Settings (do once per site):** global colours and global fonts named from the tokens (Primary, Secondary, Text, Accent, Surface…), default typography per heading level, default button style, container width and default gap (space.500), default padding, link/selection/focus colours. Push them with `wp elementor kit import <kit.zip>` if a kit exists, otherwise set them in the editor once; `deploy/set_breakpoints.py` sets the breakpoints over REST. Every widget then references globals so JSON stays tiny, consistent, and a client colour change is one edit. Also Site Settings > Performance: load Google Fonts locally; Elementor > Settings > Features: Optimized Markup, Improved CSS/Asset loading, Element caching, Inline font icons, Lazy load background images.
+**Site setup (do once per site, all of it before the first page is generated — every item here is site-wide and cheap now, expensive later):**
 
-**Generator:** extend `build/build_template.py` (helpers `container(...)`, `heading(...)`, `text(...)`, `image(...)`, `button(...)`, `icon_box(...)`, `responsive(key, desktop, tablet, mobile)`, and the `SP` spacing constants) with one `build_<page>()` per page that transcribes the Section Spec into a call tree. `responsive()` must always write all three keys when tablet/mobile values are given; a missing `_mobile` value in the output is a bug. Padding/margin/gap helpers accept token keys only (`pad(SP[1000], 0, SP[1000], 0)`), so an off-scale value is a type error, not a silent drift. `image()` looks up `deploy/media-map.json` and writes `{"url": ..., "id": <attachment id>}` so Elementor outputs srcset and width/height. Emit `templates/<page>.json`. Generating from code rather than hand-writing JSON keeps ids unique, keys correct and iterations cheap (change one helper, regenerate every page).
+- Global colours and fonts named from the tokens (Primary, Secondary, Text, Accent, Surface…), default typography per heading level, default button style, container width and default gap (space.500), default padding, link/selection/focus colours. `wp elementor kit import <kit.zip>` if a kit exists, otherwise set once in the editor. Every widget then references globals so JSON stays tiny and a client colour change is one edit.
+- Breakpoints: switch on Mobile Landscape (≤880) with `deploy/set_breakpoints.py --apply` (or Site Settings) **before** generating responsive values — the builders emit `*_mobile_extra` values and Elementor silently ignores them until that breakpoint is active.
+- Performance flags: Site Settings > Performance: load Google Fonts locally; Elementor > Settings > Features: Optimized Markup, Improved CSS loading (`e_optimized_css_loading`, ~2 s of render-blocking CSS on a typical build), Improved Asset loading, Element caching, Inline font icons, Lazy load background images. Ask once at Gate A, then set them all.
+- The site-fixes mu-plugin: upload `deploy/mu-plugins/ignite-site-fixes.php` to `wp-content/mu-plugins/` (FTP or SSH; no activation). It carries the behaviours Elementor and REST cannot: the `<main id="content">` landmark Hello Elementor's skip link points at, the skip-link focus style, Yoast meta registered for REST (without it a REST write returns 200 and is silently discarded), the LCP hero preload with `fetchpriority="high"`, Google Fonts trimmed to the families actually used and loaded async, and jquery-migrate dequeued. Edit the two `PER SITE` lines (font families, brand colour) per client. This is a known kit component, not a Gate B item.
+- Elementor Pro theme-builder conditions are written through Elementor's own `site-editor/templates-conditions/<id>` endpoint, never as raw `_elementor_conditions` meta (Pro caches conditions and a meta write does not invalidate them).
+
+**Generator:** one `build/build_<page>.py` per page importing the shared helpers; `deploy/push_rest.py <tpl>` dispatches to `build_<tpl>.py` by name (never a default that could overwrite a page with the homepage). Layout comes from `build/layout.py` (`boxed2`, `row`, `col`, `eyebrow`, `h2`, `tick_line`, `center_on_mobile`, and `SITE` for phone/email) and primitives from `build/build_template.py` (helpers `container(...)`, `heading(...)`, `text(...)`, `image(...)`, `button(...)`, `icon_box(...)`, `responsive(key, desktop, tablet, mobile)`, and the `SP` spacing constants) with one `build_<page>()` per page that transcribes the Section Spec into a call tree. `responsive()` must always write all three keys when tablet/mobile values are given; a missing `_mobile` value in the output is a bug. Padding/margin/gap helpers accept token keys only (`pad(SP[1000], 0, SP[1000], 0)`), so an off-scale value is a type error, not a silent drift. `image()` looks up `deploy/media-map.json` and writes `{"url": ..., "id": <attachment id>}` so Elementor outputs srcset and width/height. Emit `templates/<page>.json`. Generating from code rather than hand-writing JSON keeps ids unique, keys correct and iterations cheap (change one helper, regenerate every page).
 
 Schema skeleton (verify keys against Adam's sample export before relying on it):
 
@@ -235,13 +246,17 @@ Also generate `qa/seo-checklist.md`, `qa/perf-checklist.md` and `qa/design-check
 
 No import dialog. Credentials live in `deploy/.env` (gitignored, never pasted into chat). Run the push from Adam's Mac shell or hand Adam the one-line command; wait for confirmation before QA.
 
+**Pre-push gates, every push, no exceptions:** `python3 build/audit_widths.py` (walks the JSON and fails on any container running row direction at a breakpoint whose visible children's widths exceed 100% — exact, instant, unaffected by bot protection) and `python3 build/audit_contact.py` (placeholder tokens, bare `tel:` hrefs, form sinks). Both exit non-zero and the push script stops. `deploy/pages.json` is append-only: every push reads it, adds or updates its own entry, writes it back; it is never regenerated from an older copy (that lost three pages once and would have created duplicates on the next push).
+
 **Route A — `deploy/push_page.sh <template> "<Title>" <slug>` (SSH + WP-CLI, preferred on 20i).** It scp's `assets/*.webp` and `templates/<page>.json` to the server, runs `wp media import` for anything not already in the library (alt text from `assets/manifest.json`), rewrites `deploy/media-map.json`, regenerates the template with real attachment IDs, then creates or updates the page by writing `_elementor_edit_mode`, `_elementor_template_type`, `_elementor_version` and `_elementor_data` (the JSON `content` array) with `wp post meta update`, and flushes Elementor CSS. Page IDs are stored in `deploy/pages.json` so re-pushes update in place.
 
 **Route B — `python3 deploy/push_rest.py <template> "<Title>" <slug>` (REST API with an Application Password) when the host has no SSH.** Same steps over HTTPS: `POST /wp/v2/media` for assets, `POST /wp/v2/pages` with the Elementor meta (Elementor 4.x exposes `_elementor_data` to REST, no mu-plugin needed), `DELETE /elementor/v1/cache`. It backs off and retries through the host's bot-protection interstitial. `deploy/push_seo.py` sets titles/descriptions the same way; `deploy/verify_live.py` confirms the page rendered.
 
 **Route C — browser fallback** only when neither works: Media > Add New in bulk, then Templates > Saved Templates > Import Templates and insert into the page, driven through Claude in Chrome (Adam's browser).
 
-After any push: purge StackCache (`wp cache flush` plus the plugin's purge, or the My20i button) before any screenshot or PSI run. `wp elementor library import` is optional for a reusable library copy.
+After any push: purge the cache layer before any screenshot or PSI run, then **wait ~25 s** — every push regenerates that page's Elementor CSS and a screenshot sooner shows an unstyled page and meaningless measurements; warm the URL two or three times, wait, then measure. All pushes and all verification run from Adam's Mac (local shell or browser pane), never from the cloud container: the container gets bot-protection pages (sometimes with `content-type: text/html` for a `.webp`) and hard 403s on writes, so any measurement from there may be measuring the interstitial. The container builds and reasons over files only. `wp elementor library import` is optional for a reusable library copy.
+
+**Local QA before any push:** `python3 build/render_preview.py <page>` renders the JSON to static HTML (dynamic Posts/theme widgets stubbed) for design review in the browser pane. Faster and more reliable than screenshotting staging; most layout questions are answered here, and every fault found is fixed in the shared helper (`layout.py` / `build_template.py`), never in one page, with an auditor added when the fault could recur.
 
 **Visual QA loop** (after each push, one batched round, at most two):
 - `build/capture_shots.py` screenshots the staging page at 1440, 1024 and 390; `build/qa_diff.py` compares with the reference shots and reports a diff percentage per section per breakpoint. For `responsive: designed` sections there is no mobile reference to diff against, so `build/responsive_audit.py` checks them against the Responsive Rules instead: no horizontal overflow, nothing clipped, no text under 14 px, tap targets ≥ 44 px, stacking order as specified.
@@ -290,6 +305,8 @@ Per page, fill and tick `qa/seo-checklist.md`:
 
 **Third-party:** nothing third-party above the fold. Maps as static image + link; social feeds (Behold.so / Smash Balloon) loaded on their own section below the fold; analytics/tag managers only via a deferred loader. Contact forms: Elementor Pro Form, honeypot over reCAPTCHA where possible (reCAPTCHA alone can cost 5–10 points).
 
+**Cache headers:** on nginx hosts (the Expert Broker's host3.approachserver.co.uk, for one) static files under `/wp-content/uploads` and `/wp-includes` never touch PHP, so `.htaccess` and WordPress plugins cannot set cache lifetimes; they are set in the host panel, at the CDN, or in an nginx location block. Say so at Gate A rather than proposing plugin fixes.
+
 **20i StackCache:** enable page caching and browser caching, CSS/JS minify; test combine on staging before trusting it (Elementor's optimised loading plus StackCache combine can double-process — if PSI shows render-blocking CSS, switch one of them off). Purge after every push before Adam runs PSI.
 
 **Loop:** after each push, ask Adam for the PSI mobile + desktop scores and the top three "Opportunities"/"Diagnostics" lines. Log them in `qa/psi.md` with the date and what changed. Address the top item, re-push, repeat. Don't guess at scores; don't run Lighthouse yourself unless asked.
@@ -301,6 +318,7 @@ Per page, fill and tick `qa/seo-checklist.md`:
 - Zero custom CSS/HTML/PHP, or each instance listed with Adam's approval quoted.
 - `spec/`, `build/`, `templates/`, `assets/`, `deploy/`, `qa/` saved in the project folder (committed if it is a git repo) with a short note per page.
 - One closing message: what was built, page IDs, scores, deviations, anything the client needs to supply (real copy, photos, form recipients).
+- A Build Report in the project folder (`qa/build-report.md`): overview, pipeline, pages table with IDs, performance runs, responsive passes, connection channels, the gotchas that cost time, and an ordered "where it stands" list. The Expert Broker report is the model; it is what the next session and the next client build pick up from.
 
 ## Working cheaply on credits (read this if you are a smaller/faster model)
 
@@ -310,5 +328,7 @@ Per page, fill and tick `qa/seo-checklist.md`:
 - Reuse the kit's scripts; extend them rather than writing raw JSON or ad-hoc shell by hand.
 - One QA loop per page at a time, two rounds maximum. Fix the biggest diff first; stop when the threshold is met, not when it "looks perfect".
 - Spacing decisions are already made: pick the token, don't deliberate. Off-scale means a Gate A note, not a judgement call.
+- Check the JSON and the local render before you screenshot staging. An auditor answers in a second; a staging screenshot needs a push, a cache purge, a 25 s wait and a clean IP.
+- A fix goes in the shared helper, not the page. If you find yourself patching one template (an overlay opacity, a gutter), the same fault is live on every other page that uses the helper.
 - If unsure whether something is possible natively, check Elementor's Style/Advanced tab controls for that widget before proposing custom CSS. Most "impossible" things are: Advanced > Position, Advanced > Transform, container Advanced > Custom width, Flex order per breakpoint, Responsive > Hide On, and the Heading widget's HTML tag.
 - Escalate (don't decide alone): any custom CSS/HTML/PHP, dropping or changing a reference section, changing copy, adding a plugin, anything that costs PageSpeed points on purpose.

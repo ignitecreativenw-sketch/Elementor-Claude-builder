@@ -8,7 +8,8 @@ can be reviewed before anything is pushed to staging.
 It reads the same settings Elementor reads (flex direction, gaps, padding,
 widths, typography, colours, radii, borders) and maps them onto plain flexbox,
 so what you see is what the container stack will produce. Supported widgets:
-heading, text-editor, image, button, star-rating, icon-list.
+heading, text-editor, image, button, star-rating, icon-list,
+accordion, form, divider, html (deliberately blank) and the theme/post set.
 """
 import json, os, sys, html
 
@@ -92,6 +93,12 @@ def common(s):
     p = box(g(s, "_padding"))
     if p:
         out.append(f"padding:{p}")
+    # Containers that clip their children — the rounded card images and the
+    # round portrait both rely on this, and without it every card in every
+    # preview taken so far has shown square corners.
+    ov = g(s, "overflow")
+    if ov:
+        out.append(f"overflow:{ov}")
     return out
 
 
@@ -420,6 +427,52 @@ def w_divider(s):
             f'<div style="border-top:{w} solid {c};width:100%"></div></div>')
 
 
+def w_accordion(s):
+    """Accordion previewed open — a preview exists to show the copy, and a
+    stack of collapsed titles shows none of it. Elementor renders the same
+    titles and bodies; only the initial state differs."""
+    tc = g(s, "title_color", "#0A1551")
+    cc = g(s, "content_color", BODY_C)
+    bw = unit(g(s, "border_width"), "1px")
+    bc = g(s, "border_color", "#E3E6EF")
+    tf = unit(g(s, "title_typography_font_size"), "18px")
+    cf = unit(g(s, "content_typography_font_size"), "16px")
+    ic = g(s, "icon_color", "#053480")
+    out = [f'<div style="width:100%;border:{bw} solid {bc};border-radius:6px;'
+           f'overflow:hidden">']
+    for i, t in enumerate(g(s, "tabs", []) or []):
+        top = "" if i == 0 else f"border-top:{bw} solid {bc}"
+        out.append(
+            f'<div style="{top}">'
+            f'<div style="display:flex;justify-content:space-between;gap:16px;'
+            f'padding:18px 20px;color:{tc};font-size:{tf};font-weight:600;'
+            f'line-height:1.4">'
+            f'<span>{t.get("tab_title","")}</span>'
+            f'<span style="color:{ic}">&minus;</span></div>'
+            f'<div class="te" style="padding:4px 20px 20px;color:{cc};'
+            f'font-size:{cf};line-height:1.65">{t.get("tab_content","")}</div>'
+            f'</div>')
+    out.append("</div>")
+    return "".join(out)
+
+
+def w_map(s):
+    """Google Maps widget. The real thing is a third-party iframe; the preview
+    draws its footprint so the section's height and layout are honest without
+    calling Google from a static file."""
+    h = unit(g(s, "height"), "360px")
+    return (f'<div style="width:100%;height:{h};border-radius:12px;'
+            f'background:#DDE3F0;display:flex;align-items:center;'
+            f'justify-content:center;color:#7A83A0;font-size:14px">'
+            f'[map: {html.escape(str(g(s, "address", "")))}]</div>')
+
+
+def w_html(s):
+    """Raw HTML widget. JSON-LD and other <script>/<style> payloads are not
+    painted, and must not execute inside a preview, so nothing is emitted."""
+    return ""
+
+
 BODY_C = "#4A5378"
 
 WIDGETS = {"heading": w_heading, "text-editor": w_text, "image": w_image,
@@ -428,7 +481,9 @@ WIDGETS = {"heading": w_heading, "text-editor": w_text, "image": w_image,
            "theme-post-excerpt": w_post_excerpt,
            "theme-post-content": w_post_content,
            "theme-post-featured-image": w_post_featured,
-           "post-info": w_post_info, "divider": w_divider}
+           "post-info": w_post_info, "divider": w_divider,
+           "accordion": w_accordion, "html": w_html,
+           "google_maps": w_map}
 
 
 # ------------------------------------------------------------------ tree

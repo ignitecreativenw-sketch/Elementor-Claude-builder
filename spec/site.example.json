@@ -1,0 +1,18 @@
+{
+  "client": "Client Ltd",
+  "phone": "0151 000 0000",
+  "phone_tel": "tel:+441510000000",
+  "email": "hello@client.co.uk",
+  "form_recipient": "hello@client.co.uk",
+  "address": "1 Example Street, Liverpool L1 0AA",
+  "reference_url": "https://REFERENCE-URL",
+  "staging_url": "https://STAGING-URL",
+  "host": {
+    "server": "nginx|apache",
+    "ssh": false,
+    "cache_layer": "20i StackCache|host panel|CDN|none",
+    "bot_protection": "Imunify360|none",
+    "push_route": "wp-cli|rest|browser",
+    "mail": "php mail|SMTP plugin"
+  }
+}

@@ -20,6 +20,9 @@ ROOT="$HERE/.."
 
 wp() { ssh -p "$SSH_PORT" "$SSH_HOST" "cd $WP_PATH && wp $*"; }
 
+echo "==> 0/5  pre-push gates"
+python3 "$ROOT/build/audit_widths.py" "$TPL" && python3 "$ROOT/build/audit_contact.py" || { echo "gate failed — fix the builder, not the page"; exit 1; }
+
 echo "==> 1/5  ship assets + template"
 ssh -p "$SSH_PORT" "$SSH_HOST" "mkdir -p $REMOTE_TMP/assets"
 scp -P "$SSH_PORT" -q "$ROOT"/assets/*.webp "$SSH_HOST:$REMOTE_TMP/assets/"
