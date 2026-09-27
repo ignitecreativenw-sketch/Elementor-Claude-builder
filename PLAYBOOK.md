@@ -94,7 +94,7 @@ The skill (`skills/elementor-clone-build/SKILL.md`) holds the standards and the 
 
 1. `python3 build/audit_widths.py` → must pass.
 2. `python3 build/audit_contact.py` → must pass.
-3. `python3 build/render_preview.py <page>` → review in the browser pane at 1440/1024/880/768/390.
+3. `python3 build/render_preview.py templates/<page>.json 1440 > qa/preview/<page>.html` (repeat for 1024 and 390 if layout differs) → review in the browser pane at 1440/1024/880/768/390.
 3a. `node tools/avoid-ai-design/scripts/detect.mjs --min=P1 qa/preview/` on the rendered HTML (detect mode — it reports, you fix in the builder). For `redesign`/`new` pages: no P0, and no SD tell the spec didn't ask for. For `clone` pages: findings are logged in `qa/design-checklist.md` as advice only. A deliberate choice the spec asked for gets an `avoid-ai-design-ignore: <ID>` note in the spec so it isn't re-raised. Then apply the four success tests from the skill — justified, coherent, not a second-order default, consistent across pages — and the silhouette test: shrink the render to a block silhouette; if it could be any other product's page, the structure is the tell.
 4. Faults: fix in `layout.py` / `build_template.py` / the shared section, regenerate all pages, re-run 1–3. If the fault could recur, add a check to an auditor.
 

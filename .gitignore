@@ -12,3 +12,5 @@ reference/*.jpg
 reference/combined.css
 templates/forms/*.txt
 !templates/forms/.gitkeep
+qa/preview/*.html
+qa/staging-html/*.html
