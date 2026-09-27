@@ -1,0 +1,200 @@
+# Elementor Clone Build — Playbook
+
+Follow this in order for every site. Each stage has an entry condition, the steps, and an exit condition. Do not start a stage until the previous one's exit condition is met. Where a step says **STOP**, wait for Adam. Everything else runs to completion without asking.
+
+The skill (`skills/elementor-clone-build/SKILL.md`) holds the standards and the why; this playbook is the order of operations and the checks. If they ever disagree, the playbook wins on sequence and the skill wins on standards.
+
+---
+
+## Stage 0 — Intake (one message, all questions at once)
+
+**Entry:** Adam has given a reference (URL or PDF) and a target site.
+
+1. Copy the kit to `~/Desktop/<Client>` if the folder doesn't exist. Connect it to the session.
+2. Ask for everything missing in a single message:
+   - pages in scope; header/footer in or out
+   - staging URL; access route (SSH host/user, or Application Password for REST); FTP if the host needs it for mu-plugins
+   - one exported Elementor template JSON from the target site (schema ground truth)
+   - SEO plugin; target keywords, location, business type; regulated industry yes/no
+   - brand tokens if they exist
+   - **contact details:** phone (display + E.164), email, form recipient, address
+   - **host profile:** nginx/Apache, SSH yes/no, cache layer, bot protection, mail route
+   - any pages that are `new` (no reference) and any that are `redesign` rather than `clone`
+3. Write `spec/site.json` from the answers. Adam writes `deploy/.env` himself (never paste credentials into chat).
+
+**Exit:** `spec/site.json` has no placeholders; `deploy/.env` exists on the Mac; push route chosen (A: SSH+WP-CLI, B: REST, C: browser) from the host profile.
+
+**STOP if:** contact details are unknown. Build nothing until they exist.
+
+---
+
+## Stage 1 — Site setup (once per site, before any page)
+
+**Entry:** Stage 0 exit.
+
+1. Elementor globals from the tokens: colours, fonts, heading typography, button style, container width, default gap `space.500`, link/selection/focus colours.
+2. Breakpoints: `python3 deploy/set_breakpoints.py --apply` (Mobile Landscape ≤880 on).
+3. Performance flags on: Google Fonts local; Optimized Markup; Improved CSS loading; Improved Asset loading; Element caching; Inline font icons; Lazy-load backgrounds.
+4. Element Manager: disable widgets the spec will not use.
+5. Upload `deploy/mu-plugins/ignite-site-fixes.php` (edit the two `PER SITE` lines first).
+6. Staging on `noindex`. Cache-lifetime headers set at the host panel/CDN if nginx.
+7. Verify the sample export's `version`, id format and key names against `build/build_template.py`; adjust the generator if they differ.
+
+**Exit:** all seven done and noted in `qa/build-report.md` under "Site setup".
+
+---
+
+## Stage 2 — Capture
+
+**Entry:** Stage 1 exit.
+
+1. URL: `python3 build/capture_reference.py <url>` for each page → `reference/` screenshots at 1440/1024/390, `design-tokens.json` per breakpoint with `spacing_snap`, `content.json`, `combined.css`.
+2. PDF: `pdftoppm -r 150 -png`, `pdftotext -layout`, `pdffonts`; colours sampled with PIL; scale factor noted.
+3. Legal/regulated pages: `build/extract_legal.py` → verbatim blocks; parity count recorded.
+4. Images: `python3 build/download_assets.py` → `assets/` as WebP at rendered-width×2 (caps 1920/1200/800), `assets/manifest.json` with alt text.
+
+**Exit:** tokens + content files exist for every page in scope. No screenshots opened unless a decision needed one.
+
+---
+
+## Stage 3 — Section Spec → **Gate A**
+
+**Entry:** Stage 2 exit.
+
+1. Write `spec/<page>.md` per page in the skill's format. Header carries `Mode: clone | redesign | new`, responsive source, and every spacing snap over 4 px.
+2. Every reference pattern mapped to a native widget from the table. Anything unmapped → "Needs approval" list.
+3. `mode: new` or gap-filling pages: run UI UX Pro Max `--design-system --density 3` and adopt only what the spec header needs.
+4. Forms: default Elementor Pro Form; FormCraft only if logic/calculation/multi-step/popup is required, with `spec/forms/<name>.json`.
+5. Write `qa/seo-checklist.md`, `qa/perf-checklist.md`, `qa/design-checklist.md` for the page.
+
+**STOP — Gate A.** One message to Adam: spec summary, per-page mode, deviations, spacing snaps > 4 px, designed-responsive sections, site-wide settings switched on in Stage 1, Gate B items. Wait for "approved" or amendments.
+
+**Exit:** Adam has approved the spec.
+
+---
+
+## Stage 4 — Build
+
+**Entry:** Gate A approved.
+
+1. `build/build_<page>.py` per page, importing `layout.py` and `build_template.py`. Shared sections (cards, process block, CTA, lender/logo strip) are functions used by every page that needs them.
+2. Spacing via `SP[...]` tokens only. Responsive values at desktop/tablet/mobile (+ mobile_extra where the rules say so).
+3. `python3 build/build_<page>.py` → `templates/<page>.json`.
+4. FormCraft forms: `python3 build/build_form.py spec/forms/<name>.json` → `templates/forms/<name>.txt`.
+
+**Exit:** every in-scope page has a template. No literal px in padding/margin/gap. No placeholder tokens.
+
+---
+
+## Stage 5 — Local QA (before anything touches staging)
+
+**Entry:** Stage 4 exit.
+
+1. `python3 build/audit_widths.py` → must pass.
+2. `python3 build/audit_contact.py` → must pass.
+3. `python3 build/render_preview.py <page>` → review in the browser pane at 1440/1024/880/768/390.
+4. Faults: fix in `layout.py` / `build_template.py` / the shared section, regenerate all pages, re-run 1–3. If the fault could recur, add a check to an auditor.
+
+**Exit:** both auditors pass on all templates; local render matches the spec.
+
+---
+
+## Stage 6 — Push
+
+**Entry:** Stage 5 exit. Run from Adam's Mac, never the cloud container.
+
+1. Media first: `deploy/push_page.sh` handles it on Route A; `python3 deploy/sync_media.py` on Route B. `deploy/media-map.json` updated; templates regenerated with real IDs.
+2. Page: `deploy/push_page.sh <tpl> "<Title>" <slug>` (A) or `python3 deploy/push_rest.py <tpl> "<Title>" <slug>` (B). Both run the auditors first and stop on failure.
+3. Theme parts (header, footer, single post): `python3 deploy/push_theme_part.py`; conditions via Elementor's own endpoint.
+4. FormCraft: import the `.txt` in wp-admin, open once and Save, record the id in `deploy/pages.json > forms`, regenerate the page with the shortcode.
+5. `deploy/pages.json` updated by the script (append-only). Never hand-edit from an old copy.
+6. Purge cache. Wait 25 s. Warm the URL twice.
+
+**Exit:** `python3 deploy/verify_live.py` confirms every pushed page renders.
+
+---
+
+## Stage 7 — Staging QA (one batched round, two at most)
+
+**Entry:** Stage 6 exit.
+
+1. `python3 build/capture_shots.py` at 1440/1024/390 (+768/880 read-only). `python3 build/qa_diff.py` for `clone` sections; `python3 build/responsive_audit.py` for `designed`/`new` sections.
+2. Craft-floor checks and `qa/design-checklist.md` ticked in the same round. Optional: Impeccable detector on saved HTML.
+3. Contact sweep: tap every `tel:` and submit every form on staging; notification received.
+4. Fix at source (Stage 5 loop), re-push (Stage 6), one more round. Then stop.
+
+**Exit:** clone sections < 2 % RMSE at all widths; designed sections pass the rules; design checklist ticked; every form delivers.
+
+---
+
+## Stage 8 — SEO
+
+**Entry:** Stage 7 exit.
+
+1. Titles and descriptions for every page/post in `deploy/seo.json`; `python3 deploy/push_seo.py` writes and reads back. Regulated clients: no rates, fees, LTVs, criteria.
+2. H1/H2 hierarchy, alt text, slugs matching the live site (or redirect noted), canonical, OG, schema via the plugin.
+3. Menus: `python3 deploy/setup_menu.py`. No nav or breadcrumb pointing at a missing page.
+4. `qa/seo-checklist.md` fully ticked.
+
+**Exit:** checklist ticked; SEO 100 on PSI.
+
+---
+
+## Stage 9 — Performance loop
+
+**Entry:** Stage 8 exit. Adam runs PSI; Claude never measures from the container.
+
+1. Ask Adam for mobile + desktop scores and the top three Opportunities/Diagnostics. Log in `qa/psi.md`.
+2. Fix the top item at source (fonts, LCP image, CSS loading, third-party, cache headers at host). Re-push, purge, wait, ask again.
+3. Stop at 100/100, or when the only remaining item is outside WordPress (host cache headers, a client-mandated script) and it is written down.
+
+**Exit:** `qa/psi.md` shows 100/100 or the named blocker.
+
+---
+
+## Stage 10 — Handover
+
+**Entry:** Stage 9 exit.
+
+1. `qa/build-report.md`: overview, pipeline, pages table with IDs, performance runs, responsive passes, channels, gotchas, ordered "where it stands" with the single blocking item first.
+2. Commit the project folder if it is a git repo.
+3. Closing message: what was built, page IDs, scores, deviations, what the client must supply (copy, photos, legal sign-off), what needs Adam's go-ahead.
+4. Rotate any credential that was ever pasted into a chat.
+
+**Exit:** report written; Adam has the closing message.
+
+---
+
+## Stage 11 — Go-live (separate task, on Adam's instruction)
+
+1. Client sign-off on legal pages and any sample copy; banners removed; `[CLIENT TO CONFIRM]` resolved.
+2. Slugs and redirects match the live site. Conversion tracking on forms and `tel:` if there is ad spend.
+3. Domain pointed; `noindex` removed; sitemap submitted; cache purged; PSI re-run on the live URL and logged.
+
+---
+
+## Never
+
+- Never build with an HTML widget, custom CSS, or PHP beyond the kit mu-plugin without Gate B approval.
+- Never push, screenshot or measure from the cloud container.
+- Never paste a credential, an `.env`, or a raw FormCraft export into chat.
+- Never regenerate `deploy/pages.json` from an old copy.
+- Never patch a single page's template for a fault that lives in a shared helper.
+- Never leave a `[PLACEHOLDER]` in a template; the auditors exist so this cannot happen silently.
+- Never write regulatory or legal wording; extract, parity-check, flag for sign-off.
+- Never switch a page from clone to redesign without a Gate B note.
+- Never keep polishing past the second staging QA round.
+
+## Per-page tick list (copy into `qa/<page>.md`)
+
+```
+[ ] spec written, mode set, Gate A approved
+[ ] build_<page>.py uses layout.py + SP tokens only
+[ ] audit_widths pass   [ ] audit_contact pass   [ ] render_preview reviewed
+[ ] pushed; pages.json entry present; verify_live OK
+[ ] qa_diff / responsive_audit pass at 1440/1024/390 (+768/880 read)
+[ ] design-checklist ticked
+[ ] forms deliver; tel: links work
+[ ] seo-checklist ticked; title/description pushed and read back
+[ ] PSI logged in qa/psi.md
+```

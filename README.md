@@ -2,6 +2,7 @@
 
 Ignite Creative's kit for rebuilding a reference site or PDF as native Elementor (Flexbox Container) JSON, pushed to a 20i staging site with WP-CLI or the REST API, to a 100 PageSpeed / full-SEO standard.
 
+- `PLAYBOOK.md` — the stage-by-stage order of operations with entry/exit checks; followed on every build.
 - `skills/elementor-clone-build/SKILL.md` — the Claude skill (the procedure). Save it to your Claude account; this copy is the backup.
 - `build/` — capture, generate, QA scripts (Playwright + Python). `layout.py` holds the shared row/col/section helpers and loads contact details from `spec/site.json`; `audit_widths.py` and `audit_contact.py` gate every push; `render_preview.py` renders JSON to static HTML for local QA; `build_form.py` generates FormCraft import files.
 - `deploy/` — push scripts (SSH+WP-CLI or REST). Copy `.env.example` to `.env` and fill in; `.env` is gitignored and never pasted into chat. `mu-plugins/ignite-site-fixes.php` is the per-site must-use plugin (landmark, skip link, Yoast REST, LCP preload, font trimming).

@@ -9,6 +9,8 @@ Turn a reference (live URL or PDF) into a pixel-faithful Elementor site that is 
 
 Target stack: WordPress + Elementor core + Elementor Pro 4.2.x, **Flexbox Container** editor (not V4 Atomic), typically 20i hosting with StackCache; some client hosts are nginx with no SSH (REST route). The project folder lives on Adam's Mac (connect it to the session); the kit repo is `ignitecreativenw-sketch/Elementor-Claude-builder`. Adam checks PageSpeed Insights manually and pastes scores back.
 
+**Order of operations:** follow `PLAYBOOK.md` in the kit repo stage by stage (Intake → Site setup → Capture → Spec/Gate A → Build → Local QA → Push → Staging QA → SEO → Performance → Handover → Go-live). This skill holds the standards; the playbook holds the sequence and the exit checks. Do not skip a stage or start one before the previous exit condition is met.
+
 ## The nine rules (never break these without Adam's written OK)
 
 1. **Native widgets only.** Heading, Text Editor, Image, Button, Icon, Icon Box, Icon List, Image Box, Container, Nested Tabs/Accordion, Pro Form, Posts/Loop Grid, Testimonial Carousel, Call to Action, etc. No HTML widget, no code block, no shortcode wrappers, no inline `style=` in Text Editor content. The site must stay editable by Adam and his clients in the normal Elementor UI.
