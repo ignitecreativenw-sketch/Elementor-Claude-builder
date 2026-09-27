@@ -20,7 +20,8 @@ The skill (`skills/elementor-clone-build/SKILL.md`) holds the standards and the 
    - **contact details:** phone (display + E.164), email, form recipient, address
    - **host profile:** nginx/Apache, SSH yes/no, cache layer, bot protection, mail route
    - any pages that are `new` (no reference) and any that are `redesign` rather than `clone`
-3. Write `spec/site.json` from the answers. Adam writes `deploy/.env` himself (never paste credentials into chat).
+3. Read `LESSONS.md` in the kit before asking anything — a previous build may already answer it or add a question.
+4. Write `spec/site.json` from the answers. Adam writes `deploy/.env` himself (never paste credentials into chat).
 
 **Exit:** `spec/site.json` has no placeholders; `deploy/.env` exists on the Mac; push route chosen (A: SSH+WP-CLI, B: REST, C: browser) from the host profile.
 
@@ -176,6 +177,33 @@ The skill (`skills/elementor-clone-build/SKILL.md`) holds the standards and the 
 
 ---
 
+## Stage 12 — Retrospective and self-heal (after sign-off, every project, no exceptions)
+
+**Entry:** Stage 11 exit (client sign-off and go-live), or Adam declares the project complete.
+
+The build report (Stage 10) says *what* was built. This stage says *what we learned* and, more importantly, turns every lesson into a change in the kit so the next build cannot repeat the mistake. A lesson that only lives in a document is not learned.
+
+1. **Gather the evidence, don't recall it.** Read `qa/build-report.md`, `qa/psi.md`, every `qa/<page>.md` tick list, `qa/design-checklist.md`, the git log of the project folder (`git log --oneline`), and the session notes. Count: pages built, pushes per page, staging QA rounds per page, auditor failures caught before push, Gate B items raised, credentials rotated, days from intake to sign-off.
+2. **Write `qa/retro.md`** from `qa/retro-template.md`. Every entry in the "went wrong" and "lesson" sections has a source (a commit, a report line, a PSI run) — no impressions. Sections, in order: summary in five lines; the numbers from step 1; what went well and *why* (so it can be kept deliberately, not by luck); what went wrong, each with root cause, cost (time, pushes, credits, client impact) and where in the pipeline it should have been caught; what the client or Adam changed mid-build and whether the playbook handled it; what a smaller model would have got wrong here; the lessons table.
+3. **Classify every lesson** into exactly one of four kinds, in the lessons table:
+   - **Kit** — a script, helper or auditor change (`build/`, `deploy/`, `mu-plugins/`). The fault can be caught or prevented by code.
+   - **Playbook** — a missing or mis-ordered step, a missing exit condition, a check that belonged at an earlier stage.
+   - **Skill** — a standard, rule or threshold (spacing, craft floor, responsive rules, SEO, performance).
+   - **One-off** — genuinely specific to this client or host; recorded in `LESSONS.md` for reference, changes nothing.
+   Apply the test from the Expert Broker build: *would this have happened on the next client too?* If yes, it is not a one-off.
+4. **Apply the Kit lessons now.** Make the change in `~/Desktop/Elementor-Claude-builder` (not in the client folder), with the auditor or test that proves it, and commit with a message that names the retro (`retro(<client>): audit_widths also checks mobile_extra`). Every fault that recurred or could recur gets a check in an auditor, or a hard failure in a helper, or a required field in `site.json` — whichever fails earliest.
+5. **Apply the Playbook lessons now.** Edit `PLAYBOOK.md` in the kit: add the step, move the check earlier, tighten the exit condition. Commit.
+6. **Propose the Skill lessons.** Standards live in the saved skill and only Adam can save it: edit `skills/elementor-clone-build/SKILL.md` in the kit, commit, and hand Adam a skill proposal with the diff summarised in one paragraph. Do not silently diverge the kit copy from the saved skill; the proposal is what closes the loop.
+7. **Append to `LESSONS.md`** in the kit: one dated block per project — client, stack, the numbers, the lessons table with its kind and the commit that applied each. This is the running memory of the pipeline; read it at Stage 0 of every new build.
+8. **Prune.** Anything in the playbook, skill or kit that this build proved unnecessary or wrong is removed or corrected, not left to accumulate. A rule nobody could point to a reason for is a candidate.
+9. **Report to Adam** in one message: the five-line summary, the lessons table, the commits made, the skill proposal (if any), and one thing to watch on the next build. Push the kit to GitHub (`git push`) or ask Adam to.
+
+**Exit:** `qa/retro.md` written; every non-one-off lesson has a commit in the kit or a skill proposal; `LESSONS.md` has this project's block; the kit is pushed.
+
+**Self-heal during the build, not only after it.** The retro is the formal pass, but the same loop runs the moment a fault is found at any stage: name where it lives (page, shared helper, playbook, standard), fix it there, add the guard that would have caught it, note it in `qa/build-report.md` under "Gotchas". Stage 12 then checks that every gotcha in the report has a matching guard or lesson. A gotcha with no guard is the first item on the lessons table.
+
+---
+
 ## Never
 
 - Never build with an HTML widget, custom CSS, or PHP beyond the kit mu-plugin without Gate B approval.
@@ -187,6 +215,7 @@ The skill (`skills/elementor-clone-build/SKILL.md`) holds the standards and the 
 - Never write regulatory or legal wording; extract, parity-check, flag for sign-off.
 - Never switch a page from clone to redesign without a Gate B note.
 - Never keep polishing past the second staging QA round.
+- Never close a project without Stage 12. A build report without a retro and kit commits is a build we will repeat.
 - Never trade one default for another: the fix for a purple gradient is not cream-and-terracotta, and the fix for that is not near-black-and-lime. Every direction traces back to the client's subject and is checked against the SD clusters before Gate A.
 
 ## Per-page tick list (copy into `qa/<page>.md`)
@@ -201,4 +230,5 @@ The skill (`skills/elementor-clone-build/SKILL.md`) holds the standards and the 
 [ ] forms deliver; tel: links work
 [ ] seo-checklist ticked; title/description pushed and read back
 [ ] PSI logged in qa/psi.md
+[ ] every gotcha for this page has a guard or a lessons-table entry (Stage 12)
 ```

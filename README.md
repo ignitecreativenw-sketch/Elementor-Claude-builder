@@ -2,6 +2,7 @@
 
 Ignite Creative's kit for rebuilding a reference site or PDF as native Elementor (Flexbox Container) JSON, pushed to a 20i staging site with WP-CLI or the REST API, to a 100 PageSpeed / full-SEO standard.
 
+- `LESSONS.md` — running memory: one block per completed project with its lessons and the commits that applied them. Read at Stage 0.
 - `PLAYBOOK.md` — the stage-by-stage order of operations with entry/exit checks; followed on every build.
 - `skills/elementor-clone-build/SKILL.md` — the Claude skill (the procedure). Save it to your Claude account; this copy is the backup.
 - `build/` — capture, generate, QA scripts (Playwright + Python). `layout.py` holds the shared row/col/section helpers and loads contact details from `spec/site.json`; `audit_widths.py` and `audit_contact.py` gate every push; `render_preview.py` renders JSON to static HTML for local QA; `build_form.py` generates FormCraft import files.
