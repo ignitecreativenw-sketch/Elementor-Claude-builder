@@ -39,8 +39,9 @@ The skill (`skills/elementor-clone-build/SKILL.md`) holds the standards and the 
 5. Upload `deploy/mu-plugins/ignite-site-fixes.php` (edit the two `PER SITE` lines first).
 6. Staging on `noindex`. Cache-lifetime headers set at the host panel/CDN if nginx.
 7. Verify the sample export's `version`, id format and key names against `build/build_template.py`; adjust the generator if they differ.
+8. Fetch the design tooling into `tools/` (gitignored): `git clone -q --depth 1 https://github.com/nextlevelbuilder/ui-ux-pro-max-skill tools/ui-ux-pro-max-skill` and `git clone -q https://github.com/funboy322/avoid-ai-design tools/avoid-ai-design && git -C tools/avoid-ai-design checkout 2b7c71836b06cdf6b3d73265b56490c1b75ad5aa`. Confirm `node --version` ≥ 18 for the scanner.
 
-**Exit:** all seven done and noted in `qa/build-report.md` under "Site setup".
+**Exit:** all eight done and noted in `qa/build-report.md` under "Site setup".
 
 ---
 
@@ -64,10 +65,11 @@ The skill (`skills/elementor-clone-build/SKILL.md`) holds the standards and the 
 1. Write `spec/<page>.md` per page in the skill's format. Header carries `Mode: clone | redesign | new`, responsive source, and every spacing snap over 4 px.
 2. Every reference pattern mapped to a native widget from the table. Anything unmapped → "Needs approval" list.
 3. `mode: new` or gap-filling pages: run UI UX Pro Max `--design-system --density 3` and adopt only what the spec header needs.
+3a. **Anti-AI-design review (every `redesign` and `new` page, and any section the reference leaves undecided) — `/avoid-ai-design`.** Before the spec is presented, check the planned direction against `tools/avoid-ai-design/references/ai-tells-catalog.md`, especially the second-order clusters SD1–SD8 (cream + terracotta, near-black + acid accent, broadsheet cosplay, template chrome, one accented headline word, decorative 01/02/03, fake window chrome, the purple-escape accent) and the layout tells L1–L9 (centred hero over three icon cards, generic stat strip, default four-column footer, cookie-cutter section order). For each part of the plan ask: *would I arrive here for any similar page?* If yes, revise it from the client's subject — trade, place, materials, the domain's own artefacts — and record what changed in the spec under `Direction`. UI UX Pro Max output is a proposal that frequently lands in an SD cluster; it goes through this check like anything else. Write the committed direction (4–6 named colours with roles, faces and roles, the layout idea in one sentence, the one signature detail) into the spec header; it is the site's single design contract — the Elementor globals and `layout.py` implement it, so page two cannot drift from page one (catalog X1). `mode: clone` pages are exempt: the reference wins, and any tells it carries are reported as advice at Gate A, not fixed.
 4. Forms: default Elementor Pro Form; FormCraft only if logic/calculation/multi-step/popup is required, with `spec/forms/<name>.json`.
 5. Write `qa/seo-checklist.md`, `qa/perf-checklist.md`, `qa/design-checklist.md` for the page.
 
-**STOP — Gate A.** One message to Adam: spec summary, per-page mode, deviations, spacing snaps > 4 px, designed-responsive sections, site-wide settings switched on in Stage 1, Gate B items. Wait for "approved" or amendments.
+**STOP — Gate A.** One message to Adam: spec summary, per-page mode, the committed direction and what the anti-AI review changed (with one or two alternatives in a sentence), deviations, spacing snaps > 4 px, designed-responsive sections, site-wide settings switched on in Stage 1, Gate B items. Wait for "approved" or amendments.
 
 **Exit:** Adam has approved the spec.
 
@@ -93,9 +95,10 @@ The skill (`skills/elementor-clone-build/SKILL.md`) holds the standards and the 
 1. `python3 build/audit_widths.py` → must pass.
 2. `python3 build/audit_contact.py` → must pass.
 3. `python3 build/render_preview.py <page>` → review in the browser pane at 1440/1024/880/768/390.
+3a. `node tools/avoid-ai-design/scripts/detect.mjs --min=P1 qa/preview/` on the rendered HTML (detect mode — it reports, you fix in the builder). For `redesign`/`new` pages: no P0, and no SD tell the spec didn't ask for. For `clone` pages: findings are logged in `qa/design-checklist.md` as advice only. A deliberate choice the spec asked for gets an `avoid-ai-design-ignore: <ID>` note in the spec so it isn't re-raised. Then apply the four success tests from the skill — justified, coherent, not a second-order default, consistent across pages — and the silhouette test: shrink the render to a block silhouette; if it could be any other product's page, the structure is the tell.
 4. Faults: fix in `layout.py` / `build_template.py` / the shared section, regenerate all pages, re-run 1–3. If the fault could recur, add a check to an auditor.
 
-**Exit:** both auditors pass on all templates; local render matches the spec.
+**Exit:** both auditors pass on all templates; local render matches the spec; scanner clean at P0/P1 on redesign/new pages (or findings logged for clone pages).
 
 ---
 
@@ -119,7 +122,7 @@ The skill (`skills/elementor-clone-build/SKILL.md`) holds the standards and the 
 **Entry:** Stage 6 exit.
 
 1. `python3 build/capture_shots.py` at 1440/1024/390 (+768/880 read-only). `python3 build/qa_diff.py` for `clone` sections; `python3 build/responsive_audit.py` for `designed`/`new` sections.
-2. Craft-floor checks and `qa/design-checklist.md` ticked in the same round. Optional: Impeccable detector on saved HTML.
+2. Craft-floor checks and `qa/design-checklist.md` ticked in the same round. Save each staging page's HTML to `qa/staging-html/` and run `node tools/avoid-ai-design/scripts/detect.mjs --min=P1 qa/staging-html/` on it (Elementor and the theme can reintroduce tells the local render didn't have: default-kit fonts, untouched radius, icon chips). Optional: Impeccable detector on the same folder.
 3. Contact sweep: tap every `tel:` and submit every form on staging; notification received.
 4. Fix at source (Stage 5 loop), re-push (Stage 6), one more round. Then stop.
 
@@ -184,6 +187,7 @@ The skill (`skills/elementor-clone-build/SKILL.md`) holds the standards and the 
 - Never write regulatory or legal wording; extract, parity-check, flag for sign-off.
 - Never switch a page from clone to redesign without a Gate B note.
 - Never keep polishing past the second staging QA round.
+- Never trade one default for another: the fix for a purple gradient is not cream-and-terracotta, and the fix for that is not near-black-and-lime. Every direction traces back to the client's subject and is checked against the SD clusters before Gate A.
 
 ## Per-page tick list (copy into `qa/<page>.md`)
 
@@ -193,7 +197,7 @@ The skill (`skills/elementor-clone-build/SKILL.md`) holds the standards and the 
 [ ] audit_widths pass   [ ] audit_contact pass   [ ] render_preview reviewed
 [ ] pushed; pages.json entry present; verify_live OK
 [ ] qa_diff / responsive_audit pass at 1440/1024/390 (+768/880 read)
-[ ] design-checklist ticked
+[ ] design-checklist ticked   [ ] avoid-ai-design scan: no P0/P1 (redesign/new) or logged (clone)
 [ ] forms deliver; tel: links work
 [ ] seo-checklist ticked; title/description pushed and read back
 [ ] PSI logged in qa/psi.md
