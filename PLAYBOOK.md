@@ -6,6 +6,27 @@ The skill (`skills/elementor-clone-build/SKILL.md`) holds the standards and the 
 
 ---
 
+## The team — which agent runs which stage
+
+One orchestrator holds this playbook and the gates; seven specialists each carry one slice of the skill and one or two stages. Briefs are in `agents/`; Claude Code definitions in `.claude/agents/` (prefixed `ecb-`). The spec files are the shared memory — agents hand off through the project folder, never through each other's context. Full table, parallelism map, hand-off contract and model tiers: `agents/README.md`.
+
+| Stage | Agent | Parallel? |
+|---|---|---|
+| 0 Intake, Gate A message, 10 Handover, 12 Retro | orchestrator | no |
+| 1 Site setup | deploy | no |
+| 2 Capture | capture | per page |
+| 3 Spec + direction | design | page one alone, then per page |
+| 4 Build | build | per page |
+| 5 Local QA | qa | per page |
+| 6 Push | deploy | no (one site) |
+| 7 Staging QA | qa | per page |
+| 8 SEO | seo | alongside 9 |
+| 9 Performance | perf | alongside 8 |
+
+Every agent returns the hand-off block (STAGE / STATUS / WROTE / CHECKS / GATE B ITEMS / LESSONS / NEXT), under 300 words, paths not contents. The orchestrator copies LESSONS into the build report's Gotchas so Stage 12 finds them. Judgement stages (design, Gate A, Stage 7 visual, Stage 12) run on the strongest model; mechanical stages run mid-tier; nothing runs small without a spec to follow and an auditor to catch it.
+
+---
+
 ## Stage 0 — Intake (one message, all questions at once)
 
 **Entry:** Adam has given a reference (URL or PDF) and a target site.

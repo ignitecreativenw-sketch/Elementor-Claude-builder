@@ -35,6 +35,8 @@ Per-page tick list (copy into `qa/<page>.md`): spec + mode + Gate A · layout.py
 
 **Self-heal, during and after.** The moment a fault is found at any stage: name where it lives (page, shared helper, playbook, standard), fix it there, add the guard that would have caught it (auditor check, hard failure in a helper, required field in `site.json`), and note it under Gotchas in the build report. Stage 12 then checks every gotcha has a guard or a lessons-table entry, classifies each lesson, and turns Kit and Playbook lessons into commits in the kit repo and Skill lessons into a proposal for Adam. A lesson that only lives in a document is not learned; `LESSONS.md` in the kit is the running memory and is read at Stage 0 of the next build.
 
+**The team.** Run the playbook as one orchestrator plus seven specialists, each carrying only its slice of this skill: **capture** (Stage 2; Phase 1), **design** (Stage 3; Design Standards, Responsive Rules, spec format, widget table — the only agent that makes design decisions), **build** (Stage 4; generator section, schema, Forms), **qa** (Stages 5 and 7; auditors, scanner, diffs — reports, never fixes), **deploy** (Stages 1 and 6; site setup and push routes — Adam's Mac only), **seo** (Stage 8; Phase 5), **perf** (Stage 9; Phase 6). The orchestrator carries the Playbook table, the nine rules and the Never list, runs Stages 0, 10 and 12, holds the gates, and routes every fault to its owning agent. Agents hand off through the project folder and a fixed result block (STAGE / STATUS / WROTE / CHECKS / GATE B ITEMS / LESSONS / NEXT, under 300 words, paths not contents). Parallel per page where `agents/README.md` allows (capture, build, local QA; design after page one fixes the direction; seo alongside perf); never Stage 1, Gate A, pushes or Stage 12. Briefs: `agents/*.md`; Claude Code definitions: `.claude/agents/ecb-*.md`. Judgement stages on the strongest model, mechanical stages mid-tier.
+
 ## The nine rules (never break these without Adam's written OK)
 
 1. **Native widgets only.** Heading, Text Editor, Image, Button, Icon, Icon Box, Icon List, Image Box, Container, Nested Tabs/Accordion, Pro Form, Posts/Loop Grid, Testimonial Carousel, Call to Action, Shortcode (for FormCraft), etc. No HTML widget, no code block, no inline `style=` in Text Editor content. The site must stay editable by Adam and his clients in the normal Elementor UI.
@@ -65,6 +67,7 @@ Ask only for what's missing; don't re-ask things already in the conversation.
 ```
 <project>/
   PLAYBOOK.md       the staged order of operations (this skill's Playbook table, with commands)
+  agents/           role briefs for the orchestrator and seven specialists; .claude/agents/ecb-*.md are the Claude Code definitions
   LESSONS.md        running memory: one block per completed project, lessons + the commits that applied them; read at Stage 0
   reference/        screenshots (3 widths), combined.css, design-tokens.json, content.json, pdf pages
   spec/             site.json (contact details + host profile, required), one <page>.md Section Spec per page (the contract); spec/forms/<name>.json for FormCraft forms
