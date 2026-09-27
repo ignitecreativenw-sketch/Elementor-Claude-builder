@@ -15,7 +15,7 @@ The full version with commands is `PLAYBOOK.md` in the kit; this is the binding 
 
 | # | Stage | Exit condition |
 |---|---|---|
-| 0 | **Intake** — copy the kit to `~/Desktop/<Client>`, connect it; ask every missing question in one message (pages, header/footer, staging URL + access route, sample template export, SEO plugin + keywords, brand tokens, **contact details**, **host profile**, per-page clone/redesign/new) | `spec/site.json` has no placeholders; `deploy/.env` exists on the Mac (written by Adam); push route A/B/C chosen from the host profile. **STOP if contact details are unknown.** |
+| 0 | **Intake** — copy the kit to `~/Desktop/<Client>`, connect it; read `LESSONS.md`; ask every missing question in one message (pages, header/footer, staging URL + access route, sample template export, SEO plugin + keywords, brand tokens, **contact details**, **host profile**, per-page clone/redesign/new) | `spec/site.json` has no placeholders; `deploy/.env` exists on the Mac (written by Adam); push route A/B/C chosen from the host profile. **STOP if contact details are unknown.** |
 | 1 | **Site setup** (once per site) — globals from tokens; `set_breakpoints.py --apply`; performance flags on; Element Manager pruned; mu-plugin uploaded (PER SITE lines edited); staging `noindex`; cache headers at host if nginx; sample export checked against the generator; `tools/` clones fetched (ui-ux-pro-max, avoid-ai-design @2b7c718) | All eight noted under "Site setup" in `qa/build-report.md` |
 | 2 | **Capture** — `capture_reference.py` per URL page (or the PDF route); legal pages via `extract_legal.py` with parity counts; `download_assets.py` → WebP + `manifest.json` | Tokens + content files exist for every page in scope |
 | 3 | **Section Spec → Gate A** — `spec/<page>.md` with mode, responsive source, spacing snaps, widget mapping, Needs-approval list; UI UX Pro Max only for `new`/gap pages; **`/avoid-ai-design` review of the direction for every `redesign`/`new` page** (SD1–SD8, L1–L9; "would I arrive here for any similar page?"); committed direction written into the spec header; forms decided; QA checklists written | **STOP.** One message: spec summary, modes, direction + what the anti-AI review changed (with one or two alternatives), deviations, snaps > 4 px, designed sections, site-wide settings, Gate B items. Wait for approval. |
@@ -27,10 +27,13 @@ The full version with commands is `PLAYBOOK.md` in the kit; this is the binding 
 | 9 | **Performance loop** — Adam runs PSI; scores + top three items logged in `qa/psi.md`; fix top item at source; re-push; repeat | 100/100, or the only remaining item is outside WordPress and written down |
 | 10 | **Handover** — `qa/build-report.md` (overview, pipeline, pages + IDs, perf runs, responsive passes, channels, gotchas, ordered "where it stands" with the blocker first); commit; closing message; rotate anything ever pasted into chat | Report written; Adam has the closing message |
 | 11 | **Go-live** (separate task, on Adam's instruction) — client sign-off on legal/sample copy, banners removed; slugs/redirects; conversion tracking if ad spend; domain pointed; `noindex` off; sitemap; purge; PSI on live | Live PSI logged |
+| 12 | **Retrospective + self-heal** (every project, after sign-off) — gather evidence (build report, psi.md, tick lists, git log), write `qa/retro.md` from the template with the numbers, what went well and why, what went wrong with root cause and where it should have been caught; classify every lesson Kit / Playbook / Skill / One-off; apply Kit and Playbook lessons as commits in the kit repo now (with the auditor that proves it); propose Skill lessons to Adam; append the project block to `LESSONS.md`; prune anything the build proved wrong | `qa/retro.md` written; every non-one-off lesson has a kit commit or a skill proposal; `LESSONS.md` updated; kit pushed |
 
-**Never:** an HTML widget, custom CSS or PHP beyond the kit mu-plugin without Gate B; a push, screenshot or measurement from the cloud container; a credential, `.env` or raw FormCraft export in chat; `pages.json` regenerated from an old copy; a single-page patch for a shared-helper fault; a `[PLACEHOLDER]` left in a template; regulatory wording written rather than extracted; clone switched to redesign without a Gate B note; polishing past the second staging round; one default traded for another (purple → cream-and-terracotta → near-black-and-lime are all defaults).
+**Never:** an HTML widget, custom CSS or PHP beyond the kit mu-plugin without Gate B; a push, screenshot or measurement from the cloud container; a credential, `.env` or raw FormCraft export in chat; `pages.json` regenerated from an old copy; a single-page patch for a shared-helper fault; a `[PLACEHOLDER]` left in a template; regulatory wording written rather than extracted; clone switched to redesign without a Gate B note; polishing past the second staging round; one default traded for another (purple → cream-and-terracotta → near-black-and-lime are all defaults); closing a project without Stage 12.
 
-Per-page tick list (copy into `qa/<page>.md`): spec + mode + Gate A · layout.py + SP tokens · audit_widths · audit_contact · render_preview · avoid-ai-design scan · pushed + pages.json + verify_live · qa_diff/responsive_audit · design checklist · forms + tel: · seo checklist + read-back · PSI logged.
+Per-page tick list (copy into `qa/<page>.md`): spec + mode + Gate A · layout.py + SP tokens · audit_widths · audit_contact · render_preview · avoid-ai-design scan · pushed + pages.json + verify_live · qa_diff/responsive_audit · design checklist · forms + tel: · seo checklist + read-back · PSI logged · every gotcha has a guard or a lessons-table entry.
+
+**Self-heal, during and after.** The moment a fault is found at any stage: name where it lives (page, shared helper, playbook, standard), fix it there, add the guard that would have caught it (auditor check, hard failure in a helper, required field in `site.json`), and note it under Gotchas in the build report. Stage 12 then checks every gotcha has a guard or a lessons-table entry, classifies each lesson, and turns Kit and Playbook lessons into commits in the kit repo and Skill lessons into a proposal for Adam. A lesson that only lives in a document is not learned; `LESSONS.md` in the kit is the running memory and is read at Stage 0 of the next build.
 
 ## The nine rules (never break these without Adam's written OK)
 
@@ -62,13 +65,14 @@ Ask only for what's missing; don't re-ask things already in the conversation.
 ```
 <project>/
   PLAYBOOK.md       the staged order of operations (this skill's Playbook table, with commands)
+  LESSONS.md        running memory: one block per completed project, lessons + the commits that applied them; read at Stage 0
   reference/        screenshots (3 widths), combined.css, design-tokens.json, content.json, pdf pages
   spec/             site.json (contact details + host profile, required), one <page>.md Section Spec per page (the contract); spec/forms/<name>.json for FormCraft forms
   build/            build_template.py, layout.py (row/col/boxed2 + SITE contact details), build_<page>.py per page, build_form.py (FormCraft), audit_widths.py, audit_contact.py, capture_reference.py, capture_shots.py, qa_diff.py, responsive_audit.py, render_preview.py, download_assets.py
   templates/        <page>.json outputs (what gets pushed to the site); templates/forms/<name>.txt FormCraft imports
   assets/           optimised images (webp/svg) + manifest.json (file, alt)
   deploy/           push_page.sh (SSH), push_rest.py (REST), push_seo.py, sync_media.py, verify_live.py, set_breakpoints.py, mu-plugins/ignite-site-fixes.php, .env (gitignored), media-map.json, pages.json (append-only)
-  qa/               preview/ (local renders), staging-html/ (saved pages), screenshot diffs, psi.md, seo-checklist.md, perf-checklist.md, design-checklist.md, build-report.md
+  qa/               preview/ (local renders), staging-html/ (saved pages), screenshot diffs, psi.md, seo-checklist.md, perf-checklist.md, design-checklist.md, build-report.md, retro.md (from retro-template.md)
   tools/            clones of ui-ux-pro-max-skill, avoid-ai-design (@2b7c718) and impeccable (see Design Standards), gitignored
 ```
 
@@ -359,6 +363,7 @@ Per page, fill and tick `qa/seo-checklist.md`:
 - `spec/`, `build/`, `templates/`, `assets/`, `deploy/`, `qa/` saved in the project folder (committed if it is a git repo) with a short note per page.
 - A Build Report at `qa/build-report.md`: overview, pipeline, pages table with IDs, performance runs, responsive passes, connection channels, the gotchas that cost time, and an ordered "where it stands" list with the single blocking item first. The Expert Broker report is the model; it is what the next session and the next client build pick up from.
 - One closing message: what was built, page IDs, scores, deviations, anything the client needs to supply (real copy, photos, sign-off on legal pages), and what needs Adam's go-ahead.
+- After sign-off: Stage 12 retrospective (`qa/retro.md`), lessons applied to the kit as commits, skill proposal for any standards change, `LESSONS.md` block appended. The project is not closed until this is done.
 
 ## Working cheaply on credits (read this if you are a smaller/faster model)
 
