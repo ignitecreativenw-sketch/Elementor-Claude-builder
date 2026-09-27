@@ -9,7 +9,28 @@ Turn a reference (live URL or PDF) into a pixel-faithful Elementor site that is 
 
 Target stack: WordPress + Elementor core + Elementor Pro 4.2.x, **Flexbox Container** editor (not V4 Atomic), typically 20i hosting with StackCache; some client hosts are nginx with no SSH (REST route). The project folder lives on Adam's Mac (connect it to the session); the kit repo is `ignitecreativenw-sketch/Elementor-Claude-builder`. Adam checks PageSpeed Insights manually and pastes scores back.
 
-**Order of operations:** follow `PLAYBOOK.md` in the kit repo stage by stage (Intake → Site setup → Capture → Spec/Gate A → Build → Local QA → Push → Staging QA → SEO → Performance → Handover → Go-live). This skill holds the standards; the playbook holds the sequence and the exit checks. Do not skip a stage or start one before the previous exit condition is met.
+## The Playbook (followed in this order on every build, no exceptions)
+
+The full version with commands is `PLAYBOOK.md` in the kit; this is the binding summary. Each stage has an exit condition. Do not start a stage before the previous exit condition is met. **STOP** means wait for Adam; everything else runs to completion.
+
+| # | Stage | Exit condition |
+|---|---|---|
+| 0 | **Intake** — copy the kit to `~/Desktop/<Client>`, connect it; ask every missing question in one message (pages, header/footer, staging URL + access route, sample template export, SEO plugin + keywords, brand tokens, **contact details**, **host profile**, per-page clone/redesign/new) | `spec/site.json` has no placeholders; `deploy/.env` exists on the Mac (written by Adam); push route A/B/C chosen from the host profile. **STOP if contact details are unknown.** |
+| 1 | **Site setup** (once per site) — globals from tokens; `set_breakpoints.py --apply`; performance flags on; Element Manager pruned; mu-plugin uploaded (PER SITE lines edited); staging `noindex`; cache headers at host if nginx; sample export checked against the generator | All seven noted under "Site setup" in `qa/build-report.md` |
+| 2 | **Capture** — `capture_reference.py` per URL page (or the PDF route); legal pages via `extract_legal.py` with parity counts; `download_assets.py` → WebP + `manifest.json` | Tokens + content files exist for every page in scope |
+| 3 | **Section Spec → Gate A** — `spec/<page>.md` with mode, responsive source, spacing snaps, widget mapping, Needs-approval list; UI UX Pro Max only for `new`/gap pages; forms decided; QA checklists written | **STOP.** One message: spec summary, modes, deviations, snaps > 4 px, designed sections, site-wide settings, Gate B items. Wait for approval. |
+| 4 | **Build** — `build_<page>.py` per page on `layout.py` + `build_template.py`; shared sections as functions; `SP` tokens only; `build_form.py` for FormCraft | Every page has a template; no literal px in spacing; no placeholder tokens |
+| 5 | **Local QA** — `audit_widths.py`, `audit_contact.py`, `render_preview.py` reviewed at 1440/1024/880/768/390; faults fixed in the shared helper and an auditor added if they could recur | Both auditors pass on all templates; render matches the spec |
+| 6 | **Push** (from Adam's Mac, never the container) — media, then `push_page.sh` (A) / `push_rest.py` (B); theme parts via `push_theme_part.py`; FormCraft imported + saved once; `pages.json` updated by the script; purge, wait 25 s, warm twice | `verify_live.py` confirms every pushed page renders |
+| 7 | **Staging QA** (one round, two max) — `capture_shots.py` + `qa_diff.py` for clone sections, `responsive_audit.py` for designed/new; craft floor + design checklist in the same round; every `tel:` tapped and every form submitted | Clone sections < 2 % RMSE at all widths; designed sections pass; design checklist ticked; every form delivers |
+| 8 | **SEO** — `push_seo.py` (reads back); hierarchy, alt, slugs matching live, canonical, OG, schema; menus via `setup_menu.py` | `qa/seo-checklist.md` ticked; SEO 100 on PSI |
+| 9 | **Performance loop** — Adam runs PSI; scores + top three items logged in `qa/psi.md`; fix top item at source; re-push; repeat | 100/100, or the only remaining item is outside WordPress and written down |
+| 10 | **Handover** — `qa/build-report.md` (overview, pipeline, pages + IDs, perf runs, responsive passes, channels, gotchas, ordered "where it stands" with the blocker first); commit; closing message; rotate anything ever pasted into chat | Report written; Adam has the closing message |
+| 11 | **Go-live** (separate task, on Adam's instruction) — client sign-off on legal/sample copy, banners removed; slugs/redirects; conversion tracking if ad spend; domain pointed; `noindex` off; sitemap; purge; PSI on live | Live PSI logged |
+
+**Never:** an HTML widget, custom CSS or PHP beyond the kit mu-plugin without Gate B; a push, screenshot or measurement from the cloud container; a credential, `.env` or raw FormCraft export in chat; `pages.json` regenerated from an old copy; a single-page patch for a shared-helper fault; a `[PLACEHOLDER]` left in a template; regulatory wording written rather than extracted; clone switched to redesign without a Gate B note; polishing past the second staging round.
+
+Per-page tick list (copy into `qa/<page>.md`): spec + mode + Gate A · layout.py + SP tokens · audit_widths · audit_contact · render_preview · pushed + pages.json + verify_live · qa_diff/responsive_audit · design checklist · forms + tel: · seo checklist + read-back · PSI logged.
 
 ## The nine rules (never break these without Adam's written OK)
 
@@ -40,6 +61,7 @@ Ask only for what's missing; don't re-ask things already in the conversation.
 
 ```
 <project>/
+  PLAYBOOK.md       the staged order of operations (this skill's Playbook table, with commands)
   reference/        screenshots (3 widths), combined.css, design-tokens.json, content.json, pdf pages
   spec/             site.json (contact details + host profile, required), one <page>.md Section Spec per page (the contract); spec/forms/<name>.json for FormCraft forms
   build/            build_template.py, layout.py (row/col/boxed2 + SITE contact details), build_form.py (FormCraft), audit_widths.py, audit_contact.py, capture_reference.py, capture_shots.py, qa_diff.py, responsive_audit.py, render_preview.py, download_assets.py
