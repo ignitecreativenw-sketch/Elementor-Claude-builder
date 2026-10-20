@@ -12,6 +12,9 @@ noticed by a visitor who tries to use them:
                 bare string "tel:" — it looks right and does nothing when tapped
   form sink     a form widget whose email_to is a placeholder, so submissions
                 are addressed to nobody
+  em-dash       an em-dash (U+2014) in copy on a `mode: redesign` or `mode: new`
+                page (CONFLICTS.md #7). Clone pages reproduce the reference text
+                and are exempt; the mode is read from spec/<page>.md.
 
 Exit status is non-zero when anything is found, so it can gate a push.
 """
@@ -23,14 +26,27 @@ TEMPLATES = os.path.join(ROOT, "templates")
 PLACEHOLDER = re.compile(r"\[(PHONE NUMBER|EMAIL ADDRESS|CLIENT TO [A-Z ]+)\]")
 # a tel: link with nothing after the colon
 DEAD_TEL = re.compile(r'tel:(?![0-9+])')
+EM_DASH = "\u2014"
+SPEC = os.path.join(ROOT, "spec")
 
 
-def walk(node, path, out):
+def page_mode(name):
+    """mode: clone|redesign|new from spec/<name>.md; 'new' when there is no spec."""
+    path = os.path.join(SPEC, f"{name}.md")
+    if not os.path.exists(path):
+        return "new"
+    m = re.search(r"^mode:\s*(clone|redesign|new)", open(path, encoding="utf-8").read(), re.M)
+    return m.group(1) if m else "new"
+
+
+def walk(node, path, out, check_dash=False):
     s = node.get("settings", {})
     wtype = node.get("widgetType") or node.get("elType")
 
     for key, value in s.items():
         if isinstance(value, str):
+            if check_dash and EM_DASH in value:
+                out.append((path, wtype, "em-dash", f"in {key}: {value[:50]!r}"))
             for m in PLACEHOLDER.findall(value):
                 # bracketed client copy is deliberate in post bodies and in the
                 # service criteria tables; only contact details are a fault here
@@ -49,7 +65,7 @@ def walk(node, path, out):
             out.append((path, wtype, "form sink", f"email_to = {to!r}"))
 
     for i, kid in enumerate(node.get("elements", [])):
-        walk(kid, f"{path}/{i}", out)
+        walk(kid, f"{path}/{i}", out, check_dash)
 
 
 def main():
@@ -59,8 +75,9 @@ def main():
     for name in names:
         doc = json.load(open(os.path.join(TEMPLATES, f"{name}.json")))
         out = []
+        check_dash = page_mode(name) != "clone"
         for i, sec in enumerate(doc["content"]):
-            walk(sec, f"[{i}]", out)
+            walk(sec, f"[{i}]", out, check_dash)
         if not out:
             print(f"  ok    {name}")
             continue

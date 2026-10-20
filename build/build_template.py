@@ -3,7 +3,7 @@
 Generate native Elementor (Flexbox Container) JSON from the Section Spec.
 
 Usage:  python3 build_template.py            -> writes ../templates/home.json
-Media:  ids/urls come from ../deploy/media-map.json (written by push_page.sh
+Media:  ids/urls come from ../deploy/media-map.json (written by push_core.py
         after `wp media import`). Until that exists, urls fall back to
         MEDIA_BASE + filename and id 0.
 """

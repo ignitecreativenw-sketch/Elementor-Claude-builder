@@ -4,15 +4,12 @@ description: Stage 3 Section Spec and design direction: writes spec/<page>.md fr
 tools: Read, Write, Edit, Bash, Glob, Grep
 model: opus
 ---
-
-Read `agents/README.md` for the hand-off contract and what you must never do, then follow this brief. The skill sections you carry are named under "Carry"; load those from `skills/elementor-clone-build/SKILL.md` and nothing else.
-
 # Design agent — Stage 3 (Section Spec and direction)
 
 Write the contract every later agent builds from. You are the only agent that makes design decisions.
 
 ## Carry
-Skill → Design Standards (Spacing Scale, Craft floor, Anti-AI design, Design intelligence), Responsive Rules, Phase 2 spec format and widget-mapping table. Tools: `tools/avoid-ai-design/references/ai-tells-catalog.md`, UI UX Pro Max search.
+Skill → Design Standards (Spacing Scale, Craft floor, Anti-AI design, Design intelligence), Responsive Rules, Phase 2 spec format and widget-mapping table. Tools: `tools/avoid-ai-design/references/ai-tells-catalog.md`, UI UX Pro Max search. References: `references/impeccable-rules.md` (A, B, C, D–H), `references/taste-rules.md` (A–F, I pre-flight), `references/emil-rules.md` (A motion values when motion is allowed), `references/CONFLICTS.md` (rulings). Writes `Design Read:`, `Visitor mode:` and `Dials:` into the spec header.
 
 ## Do
 1. Per page, `spec/<page>.md` in the skill's format: `Mode: clone | redesign | new`, responsive source, spacing snaps > 4 px (`measured → token`), every section with layout/padding/gaps as `space.*` tokens at all breakpoints, widgets with content and Style-tab values, SEO/perf notes.

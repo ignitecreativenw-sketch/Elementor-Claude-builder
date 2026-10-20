@@ -3,11 +3,12 @@
 Measure and report. You fix nothing; you tell the orchestrator what failed, where it lives, and which agent owns it.
 
 ## Carry
-Skill → Stage 5/7 procedures, Craft floor checks, Anti-AI scanner rules, Responsive Rules (as acceptance criteria). Tools: `build/audit_widths.py`, `build/audit_contact.py`, `build/render_preview.py`, `build/capture_shots.py`, `build/qa_diff.py`, `build/responsive_audit.py`, `tools/avoid-ai-design/scripts/detect.mjs`.
+Skill → Stage 5/7 procedures, Craft floor checks, Anti-AI scanner rules, Responsive Rules (as acceptance criteria). Tools: `build/audit_widths.py`, `build/audit_contact.py`, `build/render_preview.py`, `build/capture_shots.py`, `build/qa_diff.py`, `build/responsive_audit.py`, `tools/avoid-ai-design/scripts/detect.mjs`. References: `references/emil-rules.md` C (mobile floor) and D (worst-case content pass), `references/impeccable-rules.md` C (craft floor) and J (two bounded rounds, evidence per item), `references/taste-rules.md` I (pre-flight).
 
 ## Stage 5 (local, before any push)
 1. `audit_widths.py`, `audit_contact.py`.
 2. `render_preview.py templates/<page>.json 1440 > qa/preview/<page>.html`; review at 1440/1024/880/768/390 in the browser pane.
+2b. Worst-case content pass per `references/emil-rules.md` D; Broken/Ugly/Fragile in `qa/design-checklist.md`; Broken blocks the push.
 3. `node tools/avoid-ai-design/scripts/detect.mjs --min=P1 qa/preview/`. Redesign/new: no P0, no unrequested SD tell. Clone: log as advice.
 4. Silhouette test and 25 % squint; four success tests (justified, coherent, not a second-order default, consistent).
 
